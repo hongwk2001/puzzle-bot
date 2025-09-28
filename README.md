@@ -10,6 +10,16 @@ I made a Youtube video with Mark Rober [here](https://www.youtube.com/watch?v=Sq
 
 [Fourty-four pages of detail can be found here](https://docs.google.com/document/d/1BUCGdZCe8JevGYF3pJ4ZjPqpcSgA7LF0kV6sWbHrT1Q/).
 
+## How to Run
+
+This project can be run from the command line. The main entrypoint is `src/run_batch.py`. It takes a `--path` argument that should point to a directory with a subdirectory named `0_photos` that contains the input images.
+
+An example is provided in the `example_data` directory. To run the project with the example data, use the following command from the root of the repository:
+
+```bash
+python3 src/run_batch.py --path example_data
+```
+
 ## Puzzle Solving Overview
 
 1. *Manually lay pieces out in the staging area*
@@ -39,12 +49,12 @@ I made a Youtube video with Mark Rober [here](https://www.youtube.com/watch?v=Sq
 5. Process each piece
     1. Find the edge of the piece in the binary image
     2. Walk along the edge, creating a dense vector path
-    4. Detect the four corners of the piece with an algorithm that finds the best four candidates based on a handful of heuristics
-    5. "Enhance" the corners by finding where the two sides would intersect, to account for slightly dinged or rounded-off corners
-    6. Extract the four sides by yanking all vertices between two consecutive corners
-    7. Note which sides are edges by calculating how close to perfectly straight each side is
-    8. Compute the best point inside the piece for the robot to grip the piece from, by computing an approximate incenter - the point inside a polygon furthest from the nearest side
-    9. Save off the piece's data and metadata about its sides, position in the input photo, etc.
+    3. Detect the four corners of the piece with an algorithm that finds the best four candidates based on a handful of heuristics
+    4. "Enhance" the corners by finding where the two sides would intersect, to account for slightly dinged or rounded-off corners
+    5. Extract the four sides by yanking all vertices between two consecutive corners
+    6. Note which sides are edges by calculating how close to perfectly straight each side is
+    7. Compute the best point inside the piece for the robot to grip the piece from, by computing an approximate incenter - the point inside a polygon furthest from the nearest side
+    8. Save off the piece's data and metadata about its sides, position in the input photo, etc.
 
 6. Deduplicate pieces that were seen in multiple images
     1. We use the vector data because our test puzzles had printed patterns on them useful for debugging
@@ -106,3 +116,4 @@ The solution of a 100 piece puzzle, showing each piece's position and orientatio
 
    45^   61v   89^   91<   73<   90<   60^   74<   44^   35v
 ```
+# puzzle-bot
