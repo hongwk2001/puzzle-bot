@@ -411,7 +411,7 @@ int main(int argc, char *argv[]) {
     // create a list of tasks, one per file
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) {
+        //if (entry->d_type == DT_REG) {
             char *filename = entry->d_name;
             if (strstr(filename, ".bmp")) {
                 char filepath[1024];
@@ -424,7 +424,7 @@ int main(int argc, char *argv[]) {
 
                 task_count++;
             }
-        }
+        //}
     }
 
     pthread_t threads[MAX_THREADS];
