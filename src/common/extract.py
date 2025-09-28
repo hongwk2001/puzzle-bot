@@ -8,6 +8,7 @@ from common.config import *
 
 def batch_extract(input_path, output_path, scale_factor):
     # just-in-time compile the C library to find islands
+    """
     source_file = pathlib.Path(os.path.join(os.path.dirname(__file__), '../c/find_islands.c'))
     cmd = fr"gcc -pthread -O3 -march=native -funroll-loops -ffast-math -o find_islands.o '{source_file}'"
     print(cmd)
@@ -16,6 +17,7 @@ def batch_extract(input_path, output_path, scale_factor):
     except subprocess.CalledProcessError as e:
         print(f"Error compiling: {e}")
         exit(1)
+        """
 
     # invoke the C library to find islands
     input_path = pathlib.Path(input_path)
