@@ -17,7 +17,18 @@ This project can be run from the command line. The main entrypoint is `src/run_b
 An example is provided in the `example_data` directory. To run the project with the example data, use the following command from the root of the repository:
 
 ```bash
-python3 src/run_batch.py --path example_data
+python src/run_batch.py --path example_data
+python src/run_batch.py --path example_data --start-at-step 5
+python src/run_batch.py --path example_data --only-process-id 20240603_172601
+python src/run_batch.py --path example_data --start-at-step 5
+python src/run_batch.py --path example_data --stop-before-step 3
+```
+```markdown
+--path: Path to the base directory containing a `0_photos` folder with JPEGs. Type: str
+--only-process-id: Only process the specified ID. Default: None, Required: False, Type: str
+--start-at-step: Start processing at this step. Default: 0, Required: False, Type: int
+--stop-before-step: Stop processing at this step. Default: 10, Required: False, Type: int
+--serialize: Enable single-threaded processing. Default: False, Action: store_true
 ```
 
 ## Puzzle Solving Overview

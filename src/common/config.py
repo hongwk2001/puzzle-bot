@@ -2,7 +2,6 @@
 Common configuration for the puzzle bot
 """
 
-
 # dimensions for the puzzle you're solving
 PUZZLE_WIDTH = 40
 PUZZLE_HEIGHT = 25
@@ -10,22 +9,20 @@ PUZZLE_NUM_PIECES = PUZZLE_WIDTH * PUZZLE_HEIGHT
 TIGHTEN_RELAX_PX_W = 5.699827119  # positive = add space between pieces, negative = remove space between pieces
 TIGHTEN_RELAX_PX_H = 9.121796862
 
-
 # Paramaters for photo segmentation
 SCALE_BMP_TO_WIDTH = None  # scale the BMP to this wide or None to turn off scaling
-CROP_TOP_RIGHT_BOTTOM_LEFT = (620, 860, 620, 860)  # crop the BMP by this many pixels on each side
+#CROP_TOP_RIGHT_BOTTOM_LEFT = (620, 860, 620, 860)  # crop the BMP by this many pixels on each side
+CROP_TOP_RIGHT_BOTTOM_LEFT = (0, 0, 0, 0)  # crop the BMP by this many pixels on each side
 MIN_PIECE_AREA = 400*400
 MAX_PIECE_DIMENSIONS = (1420, 1420)  # we use this to catch when two pieces are touching
-SEG_THRESH = 145  # raise this to cut tighter into the border
-
+#SEG_THRESH = 145  # raise this to cut tighter into the border
+SEG_THRESH = 50  #  smaller brighter pieces
 
 # Robot parameters
 APPROX_ROBOT_COUNTS_PER_PIXEL = 10
 
-
 # Deduplication
 DUPLICATE_CENTROID_DELTA_PX = 22.0
-
 
 # Directory structure for data processing
 # Step 1 takes in photos of pieces on the bed and outputs binary BMPs of those photos

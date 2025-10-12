@@ -131,8 +131,9 @@ def extract_from_file(filepath, filename, output_dir, min_island_area):
             # Convert image to a list of lists (grid)
             grid = [[img.getpixel((c, r)) for c in range(width)] for r in range(height)]
             
-            # In Pillow, white is 255 and black is 0. We want the inverse.
-            grid = [[1 if pixel == 0 else 0 for pixel in row] for row in grid]
+            # In Pillow, white is 255 and black is 0. The C code looks for islands of 1s.
+            # In a typical monochrome BMP, 1 is white. So we should treat non-black pixels as the island.
+            grid = [[1 if pixel != 0 else 0 for pixel in row] for row in grid]
 
     except Exception as e:
         print(f"Error: Unable to open or process file {filepath}. Reason: {e}")
