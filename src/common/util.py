@@ -61,12 +61,20 @@ def binary_pixel_data_for_photo(path, threshold, max_width=None, crop=None):
     crop is either None or (top, right, bottom, left) in pixels
     """
     with Image.open(path) as img:
-        if (orientation := get_photo_orientation(img)) is not None and orientation != EXPECTED_PHOTO_ORIENTATION:
-            raise Exception(f"Image {path} is not oriented correctly: {orientation}")
+        orientation = get_photo_orientation(img)
+        if orientation is not None and orientation != 1:
+            if orientation == 3:
+                img = img.rotate(180, expand=True)
+            elif orientation == 6:
+                img = img.rotate(270, expand=True)
+            elif orientation == 8:
+                img = img.rotate(90, expand=True)
+            else:
+                raise Exception(f"Image {path} has an unsupported orientation: {orientation}")
 
-        w, h = img.size
-        if w < h:
-            raise Exception(f"Image {path} is portrait, not landscape")
+        #w, h = img.size
+        #if w < h:
+        #    raise Exception(f"Image {path} is portrait, not landscape")
 
         if max_width is not None and img.size[0] > max_width:
             scale_factor = max_width / img.size[0]
@@ -86,13 +94,34 @@ def binary_pixel_data_for_photo(path, threshold, max_width=None, crop=None):
         return data, out_w, out_h, scale_factor
 
 
-def threshold_pixels(img, threshold):
-    # Convert image to grayscale numpy array
-    grayscale = img.convert('L')
-    data = np.array(grayscale)
+def threshold_pixels_color(img, color_to_remove, tolerance=100):
+    """
+    Removes a specific color from an image, treating it as the background.
+    """
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    data = np.array(img)
 
-    # Apply threshold to get binary representation
-    binary_data = np.where(data <= threshold, 0, 1).astype(np.int8)
+    # Calculate the color difference
+    diff = np.abs(data - color_to_remove)
+    distance = np.sqrt(np.sum(diff ** 2, axis=-1))
+
+    # Create a binary mask
+    binary_data = np.where(distance > tolerance, 1, 0).astype(np.int8)
+
+    return binary_data, binary_data.shape[1], binary_data.shape[0]
+
+def threshold_pixels(img, threshold):
+    # Convert image to RGB if it's not already
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    data = np.array(img)
+
+    # Calculate the "distance" of each pixel's color from black
+    # A pixel is considered "black" if the sum of its R, G, and B values is below the threshold
+    color_sum = np.sum(data, axis=2)
+    binary_data = np.where(color_sum <= threshold, 0, 1).astype(np.int8)
+
     return binary_data, binary_data.shape[1], binary_data.shape[0]
 
 
@@ -180,11 +209,12 @@ def compare_angles(angle1, angle2):
 def average_angles(angles):
     """
     Calculate the average angle from a list of angles, taking into account the circular nature of angles.
-    Input and output are in radians.
-    >>> average_angles([358, 2]) => 0.0
-    >>> average_angles([90, 270]) => 180.0
-    >>> average_angles([10, 20, 30]) => 20.0
+    Input and output are in degrees.
+    #>>> average_angles([358, 2]) == 0.0
+    #>>> average_angles([90, 270]) == 180.0
+    #>>> average_angles([10, 20, 30]) == 20.0
     """
+
     sin_sum = sum(math.sin(angle) for angle in angles)
     cos_sum = sum(math.cos(angle) for angle in angles)
     avg_angle = math.atan2(sin_sum, cos_sum)
@@ -226,6 +256,10 @@ def incenter(polygon):
         if distance > max_distance:
             max_distance = distance
             incenter = point
+
+    if incenter is None:
+        incenter = polygon.representative_point()
+
     return (int(round(incenter.x)), int(round(incenter.y)))
 
 
@@ -314,7 +348,6 @@ def counterclockwise_angle_between_vectors(h, i, j):
     return float(angle)
 
 
-
 def rotate(v: Tuple[int, int], around: Tuple[int, int], angle: float) -> Tuple[int, int]:
     """
     Rotates a vertex around a point by a given angle
@@ -375,44 +408,41 @@ def error_between_polylines(polyline1, polyline2, p1_len):
     return min(error, error_shifted) / p1_len, (error_x, error_y)
 
 
-def distance_to_polyline(point, polyline):
+from skimage.morphology import remove_small_objects
+
+
+def remove_tiny_islands(pixels, ignore_islands_along_border=False, island_value=1):
     """
-    Returns the distance from a point to a polyline, and that closest point on the polyline
+    Removes small, disconnected groups of pixels (islands) from a binary image.
+    This is a more efficient implementation using scikit-image.
     """
-    min_dist = None
-    closest_point = None
-    for i in range(len(polyline) - 1):
-        dist, p = _distance_to_segment(point, polyline[i], polyline[i + 1])
-        if min_dist is None or dist < min_dist:
-            min_dist = dist
-            closest_point = p
-    return min_dist, closest_point
+    # The function expects a boolean array, so we convert our 0/1 array.
+    # We also need to handle the case where we are removing black holes (island_value=0).
+    bool_array = pixels == island_value
+    
+    # remove_small_objects works on connected components of `True` values.
+    # If we want to remove small holes (0s), we invert the image, remove small objects, then invert back.
+    if island_value == 0:
+        bool_array = ~bool_array
 
+    # The connectivity parameter defines how pixels are considered "connected".
+    # 1 is equivalent to 4-connectivity, 2 is equivalent to 8-connectivity.
+    # Let's use 1 to match the original behavior of checking 4-way neighbors.
+    cleaned_bool_array = remove_small_objects(bool_array, min_size=100, connectivity=1)
 
-def _distance_to_segment(point, p1, p2):
-    """
-    Computes the distance from a point to a line segment
-    Returns the distance and the closest point
-    """
-    x, y = point
-    x1, y1 = p1
-    x2, y2 = p2
+    if island_value == 0:
+        cleaned_bool_array = ~cleaned_bool_array
 
-    # if the line segment is a point, return the distance to that point
-    if x1 == x2 and y1 == y2:
-        return distance(point, p1), p1
+    # Convert back to integer type
+    pixels_cleaned = cleaned_bool_array.astype(np.int8)
+    
+    # Check if any changes were made
+    removed = not np.array_equal(pixels, pixels_cleaned)
+    
+    # Update the original array in-place
+    np.copyto(pixels, pixels_cleaned)
 
-    # otherwise, compute the distance to the line
-    u = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / ((x2 - x1) ** 2 + (y2 - y1) ** 2)
-    if u > 1:
-        u = 1
-    elif u < 0:
-        u = 0
-
-    x0 = x1 + u * (x2 - x1)
-    y0 = y1 + u * (y2 - y1)
-
-    return distance(point, (x0, y0)), (x0, y0)
+    return removed
 
 
 def point_at_dist_along_segment(p1, p2, dist):

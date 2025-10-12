@@ -75,7 +75,7 @@ def _find_potential_matches_for_piece(ps, piece_id, debug=False):
         WORST_MULTIPLIER = 6.0
         piece.fits[si] = [f for f in piece.fits[si] if f[2] <= least_error * WORST_MULTIPLIER]
 
-        print(f"Piece {piece_id}[{si}] has {len(piece.fits[si])} matches, best: {least_error}")
+        print(f"Piece {piece_id}[{si}] has {len(piece.fits[si])} matches, best: {least_error} {piece.fits[si][0]}")
         if debug:
             nth = 8
             if len(piece.fits[si]) > nth:

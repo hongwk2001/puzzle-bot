@@ -24,6 +24,7 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
     id: only process the photo with this ID
     """
 
+    #1
     if start_at_step <= 1 and stop_before_step > 1:
         width, height, scale_factor = _bmp_all(
             input_path = pathlib.Path(path).joinpath(PHOTOS_DIR),
@@ -37,7 +38,7 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
         if os.path.exists("/dev/null"):
             args = [pathlib.Path(input_dir).joinpath(f), "/tmp/trash.bmp"]
         else:
-            args = [pathlib.Path(input_dir).joinpath(f), "C:/Temp/trash.bmp"]
+            args = [pathlib.Path(input_dir).joinpath(f), r"D:\git_repo\puzzle-bot\example_data\1_photo_bmps\20240603_172447.bmp"]
         width, height, scale_factor = bmp.photo_to_bmp(args)
         print(f"BMPs are {width}x{height} @ scale {scale_factor}")
 
@@ -50,6 +51,7 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
         "photo_height": height * scale_factor + CROP_TOP_RIGHT_BOTTOM_LEFT[0] + CROP_TOP_RIGHT_BOTTOM_LEFT[2],
     }
 
+    #2 segment
     photo_space_positions = {}
     if start_at_step <= 2 and stop_before_step > 2:
         photo_space_positions = _extract_all(
@@ -64,6 +66,7 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
             photo_space_positions = json.load(f)
         print(f"Loaded {len(photo_space_positions)} photo space positions")
 
+    #3. Vectorize
     if start_at_step <= 3 and stop_before_step > 3:
         _vectorize_all(
             input_path=pathlib.Path(path).joinpath(SEGMENT_DIR),
@@ -76,6 +79,7 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
             serialize=serialize
         )
 
+    #step 4 dedupe
     if start_at_step <= 4 and stop_before_step > 4:
         count = dedupe.deduplicate(
             batch_data_path=pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("batch.json"),
@@ -95,7 +99,7 @@ def _bmp_all(input_path, output_path, id):
     print(f"\n{util.BLUE}### 0 - Segmenting photos into binary images ###{util.WHITE}\n")
 
     if id:
-        fs = [f'{id}.jpeg']
+        fs = [f'{id}.jpg']
     else:
         fs = [f for f in os.listdir(input_path) if re.match(r'.*\.jpe?g', f)]
 
@@ -144,6 +148,7 @@ def _vectorize_all(input_path, output_path, metadata, robot_states, photo_space_
 
         path = pathlib.Path(input_path).joinpath(f)
         render = (id is not None)
+
         photo_space_position = photo_space_positions[f]
         original_photo_name = '_'.join(f.split('.')[0].split('_')[:-1]) + ".jpg"  # reverse engineer the BMP name to the JPG
         piece_metadata = metadata.copy()
