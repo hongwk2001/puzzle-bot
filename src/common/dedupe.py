@@ -21,6 +21,7 @@ def deduplicate(batch_data_path, input_path, output_path):
     and then compares the geometry of the pieces as a double-check / a way to flag that computer vision problems might have occurred
     """
     # open up all the pieces
+    print(f"\n{util.BLUE}### Step 4 - Dedupe ###{util.WHITE}\n")
     print(f"Loading piece data from {input_path}...")
     pieces = {}
     piece_photo_locations = {}

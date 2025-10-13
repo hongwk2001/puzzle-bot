@@ -57,6 +57,11 @@ def _find_potential_matches_for_piece(ps, piece_id, debug=False):
 
                 # compute the error between our piece's side and this other piece's side
                 error = side.error_when_fit_with(other_side, render=part_of_solution or debug, debug_str=f'{piece_id}[{si}] vs {other_piece_id}[{sj}]')
+
+                #debug
+                if piece_id ==1 and si == 1 :
+                    print(f"Comparing {piece_id}[{si}] vs {other_piece_id}[{sj}] => error: {error}")
+
                 if error <= sides.SIDE_MAX_ERROR_TO_MATCH:
                     piece.fits[si].append((other_piece.id, sj, error))
 
@@ -66,6 +71,8 @@ def _find_potential_matches_for_piece(ps, piece_id, debug=False):
         # make sure we have at least one match
         if len(piece.fits[si]) == 0:
             raise Exception(f'Piece {piece_id} side {si} has no matches but is not an edge')
+            #print(f'Warning: Piece {piece_id} side {si} has no matches but is not an edge')
+            #continue
 
         # sort by error
         piece.fits[si] = sorted(piece.fits[si], key=lambda x: x[2])
