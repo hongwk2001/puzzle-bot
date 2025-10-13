@@ -30,7 +30,7 @@ def _find_connectivity(input_path, output_path):
     """
     Opens each piece data and finds how each piece could connect to others
     """
-    print(f"\n{util.RED}### 4 - Building connectivity ###{util.WHITE}\n")
+    print(f"\n{util.BLUE}### Step 5 - Building connectivity ###{util.WHITE}\n")
     start_time = time.time()
     connectivity = connect.build(input_path, output_path)
     duration = time.time() - start_time

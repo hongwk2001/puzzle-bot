@@ -1,7 +1,5 @@
 {"start_x": "0", "start_y": "0", "start_z": "0",
 "end_x": "400", "end_y": "400", "end_z": "0",
-"max_step_size_x": "200", "max_step_size_y": "0",
+"max_step_size_x": "400", "max_step_size_y": "0",
 "photos": [
-{"file_name": "20251012_142733_1.jpg", "position": [0, 0, 0]},
-{"file_name": "20251012_142726_2.jpg", "position": [100, 0, 0]},
-{"file_name": "20251012_142715_3.jpg", "position": [200, 0, 0]}]}
+{"file_name": "20251012_1.jpg", "position": [0, 0, 0]}]}

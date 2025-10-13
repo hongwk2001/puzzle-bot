@@ -112,16 +112,12 @@ def threshold_pixels_color(img, color_to_remove, tolerance=100):
     return binary_data, binary_data.shape[1], binary_data.shape[0]
 
 def threshold_pixels(img, threshold):
-    # Convert image to RGB if it's not already
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-    data = np.array(img)
+    # Convert image to grayscale numpy array
+    grayscale = img.convert('L')
+    data = np.array(grayscale)
 
-    # Calculate the "distance" of each pixel's color from black
-    # A pixel is considered "black" if the sum of its R, G, and B values is below the threshold
-    color_sum = np.sum(data, axis=2)
-    binary_data = np.where(color_sum <= threshold, 0, 1).astype(np.int8)
-
+    # Apply threshold to get binary representation
+    binary_data = np.where(data <= threshold, 0, 1).astype(np.int8)
     return binary_data, binary_data.shape[1], binary_data.shape[0]
 
 

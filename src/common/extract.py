@@ -25,11 +25,14 @@ def batch_extract(input_path, output_path, scale_factor):
     with Pool(processes=num_workers) as pool:
         pool.map(island_finder.process_file_worker, tasks)
 
-    print("Island extraction complete.")
+    print(f"Island extraction complete. tasks: {len(tasks)}")
 
     output_photo_space_positions = {}
 
     fs = [f for f in os.listdir(output_path) if f.endswith('.bmp')]
+
+    print(f"Cnt fs: {len(fs)}")
+
     for f in fs:
         components = f.split('.')[0].split('_')
         origin_component = components[-1]

@@ -196,10 +196,11 @@ def build(connectivity=None, input_path=None, output_path=None):
                 corners.append(piece_id)
 
     print(f"Corners: {corners}, Edges: {len(edges)}")
-    if len(corners) != 4:
-        raise Exception(f"Expected 4 corners, got {len(corners)}")
-    if len(edges) != edge_length:
-        raise Exception(f"Expected {edge_length} pieces on the edge, got {len(edges)}")
+    # not trying to have perfect edges
+    # if len(corners) != 4:
+    #     raise Exception(f"Expected 4 corners, got {len(corners)}")
+    # if len(edges) != edge_length:
+    #     raise Exception(f"Expected {edge_length} pieces on the edge, got {len(edges)}")
 
     success = False
     solution = None
