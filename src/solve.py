@@ -6,7 +6,9 @@ import os
 import time
 import json
 import cv2
+from PIL import Image
 
+import numpy as np
 from common import connect, util
 from common.config import *
 
@@ -61,20 +63,38 @@ def _visualize(connectivity, path):
 
         with open(from_piece_side_json_path, 'r') as f:
             from_data = json.load(f)
-        from_points = from_data["photo_space_centroid"]
+        fr_p_ctr = np.array(from_data["photo_space_centroid"])
+        fr_piece_center = np.array(from_data["piece_center"])
+        fr_vertices = np.array(from_data["vertices"])
+        fr_first_vertex = fr_vertices[0]
+        fr_last_vertex = fr_vertices[-1]
+
+        fr_first_edge = fr_p_ctr - fr_piece_center + fr_first_vertex
+        fr_last_edge = fr_p_ctr - fr_piece_center + fr_last_vertex
+        # find center points between edges
+        fr_edge_ctr = (fr_last_edge + fr_first_edge) // 2
 
         with open(to_piece_side_json_path, 'r') as f:
             to_data = json.load(f)
-        to_points = to_data["photo_space_centroid"]
+        to_p_ctr = np.array(to_data["photo_space_centroid"])
+        to_piece_center = np.array(to_data["piece_center"])
+        to_vertices = np.array(to_data["vertices"])
+        to_first_vertex = to_vertices[0]
+        to_last_vertex = to_vertices[-1]
 
-        arrow1_start = tuple(int(x) for x in from_points)
-        arrow1_end = tuple(int(x) for x in to_points)
+        to_last_edge = to_p_ctr - to_piece_center + to_last_vertex
+        to_first_edge = to_p_ctr - to_piece_center + to_first_vertex
+        # find center points between edges
+        to_edge_ctr = (to_first_edge + to_last_edge) // 2
 
         # Draw the arrows on the image
         # Use a different color for each arrow, cycling through the colors list
         color = colors[i % len(colors)]
-        # cv2.arrowedLine(image, start_point, end_point, color, thickness, tipLength)
-        cv2.arrowedLine(image, arrow1_start, arrow1_end, color=color, thickness=5, tipLength=0.1)
+
+        #draw a line from fr_first_edge to fr_last_edge
+        cv2.line(image, tuple(fr_first_edge.astype(int)), tuple(fr_last_edge.astype(int)), color=color, thickness=20)
+        cv2.line(image, tuple(to_first_edge.astype(int)), tuple(to_last_edge.astype(int)), color=color, thickness=20)
+        cv2.arrowedLine(image, tuple(fr_edge_ctr.astype(int)), tuple(to_edge_ctr.astype(int)), color, 20, tipLength=0.05)
 
     # save image
     solution_file_path = os.path.join(path, SOLUTION_DIR, "top3_connectivity.png")
@@ -84,6 +104,8 @@ def _visualize(connectivity, path):
     duration = time.time() - start_time
     print(f"Visualizing the graph took {round(duration, 2)} seconds")
 
+    #show image
+    Image.open(solution_file_path).show()
 
 def _find_connectivity(input_path, output_path):
     """
