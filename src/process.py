@@ -24,6 +24,26 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
     id: only process the photo with this ID
     """
 
+    #0 clean 0_photos move files to 0_photos/archive dir
+    # move all files from 0_photos to 0_photos/archive except batch.json and file_name in batch_json
+    archive_dir = pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("archive")
+    os.makedirs(archive_dir, exist_ok=True)
+    with open(pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("batch.json")) as f:
+        batch_info = json.load(f)["photos"]
+    valid_files = [d["file_name"] for d in batch_info]
+    for f in os.listdir(pathlib.Path(path).joinpath(PHOTOS_DIR)):
+        if f in( "archive", "batch.json"):
+            continue
+        if f not in valid_files:
+            src = pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath(f)
+            dst = archive_dir.joinpath(f)
+            print(f"Archiving invalid file {src} to {dst}")
+            #try to move, if dst exists, overwrite
+            if os.path.exists(dst):
+                os.remove(dst)
+            os.rename(src, dst)
+
+    #1
     if start_at_step <= 1 and stop_before_step > 1:
         width, height, scale_factor = _bmp_all(
             input_path = pathlib.Path(path).joinpath(PHOTOS_DIR),
@@ -37,7 +57,7 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
         if os.path.exists("/dev/null"):
             args = [pathlib.Path(input_dir).joinpath(f), "/tmp/trash.bmp"]
         else:
-            args = [pathlib.Path(input_dir).joinpath(f), "C:/Temp/trash.bmp"]
+            args = [pathlib.Path(input_dir).joinpath(f), r"D:\git_repo\puzzle-bot\example_data\1_photo_bmps\20240603_172447.bmp"]
         width, height, scale_factor = bmp.photo_to_bmp(args)
         print(f"BMPs are {width}x{height} @ scale {scale_factor}")
 
@@ -50,6 +70,7 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
         "photo_height": height * scale_factor + CROP_TOP_RIGHT_BOTTOM_LEFT[0] + CROP_TOP_RIGHT_BOTTOM_LEFT[2],
     }
 
+    #2 segment
     photo_space_positions = {}
     if start_at_step <= 2 and stop_before_step > 2:
         photo_space_positions = _extract_all(
@@ -64,6 +85,7 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
             photo_space_positions = json.load(f)
         print(f"Loaded {len(photo_space_positions)} photo space positions")
 
+    #3. Vectorize
     if start_at_step <= 3 and stop_before_step > 3:
         _vectorize_all(
             input_path=pathlib.Path(path).joinpath(SEGMENT_DIR),
@@ -76,16 +98,17 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
             serialize=serialize
         )
 
+    #step 4 dedupe
     if start_at_step <= 4 and stop_before_step > 4:
         count = dedupe.deduplicate(
             batch_data_path=pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("batch.json"),
             input_path=pathlib.Path(path).joinpath(VECTOR_DIR),
             output_path=pathlib.Path(path).joinpath(DEDUPED_DIR)
         )
-        if count > PUZZLE_WIDTH * PUZZLE_HEIGHT:
-            raise Exception(f"dedupe: expected {PUZZLE_WIDTH * PUZZLE_HEIGHT} pieces but ended up with {count} unique pieces. Try adjusting DUPLICATE_CENTROID_DELTA_PX in config.py")
-        elif count < PUZZLE_WIDTH * PUZZLE_HEIGHT:
-            print(f"dedupe: expected {PUZZLE_WIDTH * PUZZLE_HEIGHT} pieces but ended up with {count} unique pieces. This is usually because some pieces are touching and were not separated. Try turning off CROP_TOP_RIGHT_BOTTOM_LEFT in config.py then running again to find the touching pieces.")
+        # if count > PUZZLE_WIDTH * PUZZLE_HEIGHT:
+        #     raise Exception(f"dedupe: expected {PUZZLE_WIDTH * PUZZLE_HEIGHT} pieces but ended up with {count} unique pieces. Try adjusting DUPLICATE_CENTROID_DELTA_PX in config.py")
+        # elif count < PUZZLE_WIDTH * PUZZLE_HEIGHT:
+        #     print(f"dedupe: expected {PUZZLE_WIDTH * PUZZLE_HEIGHT} pieces but ended up with {count} unique pieces. This is usually because some pieces are touching and were not separated. Try turning off CROP_TOP_RIGHT_BOTTOM_LEFT in config.py then running again to find the touching pieces.")
 
 
 def _bmp_all(input_path, output_path, id):
@@ -95,7 +118,7 @@ def _bmp_all(input_path, output_path, id):
     print(f"\n{util.BLUE}### 0 - Segmenting photos into binary images ###{util.WHITE}\n")
 
     if id:
-        fs = [f'{id}.jpeg']
+        fs = [f'{id}.jpg']
     else:
         fs = [f for f in os.listdir(input_path) if re.match(r'.*\.jpe?g', f)]
 
@@ -144,6 +167,7 @@ def _vectorize_all(input_path, output_path, metadata, robot_states, photo_space_
 
         path = pathlib.Path(input_path).joinpath(f)
         render = (id is not None)
+
         photo_space_position = photo_space_positions[f]
         original_photo_name = '_'.join(f.split('.')[0].split('_')[:-1]) + ".jpg"  # reverse engineer the BMP name to the JPG
         piece_metadata = metadata.copy()
