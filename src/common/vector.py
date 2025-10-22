@@ -591,11 +591,11 @@ class Vector(object):
             raise Exception(f"{self.id}: Expected the piece to be roughly square, but the distance between sides is not comparable ({d02} vs {d13})")
 
         edge_count = sum([s.is_edge for s in self.sides])
-        if edge_count > 2:
-            raise Exception(f"{self.id}: A piece cannot be a part of more than 2 edges, found {edge_count}")
-        elif edge_count == 2:
-            if (self.sides[0].is_edge and self.sides[2].is_edge) or (self.sides[1].is_edge and self.sides[3].is_edge):
-                raise Exception(f"{self.id}: A piece cannot be a part of two edges that are parallel!")
+        # if edge_count > 2:
+        #     raise Exception(f"{self.id}: A piece cannot be a part of more than 2 edges, found {edge_count}")
+        # elif edge_count == 2:
+        #     if (self.sides[0].is_edge and self.sides[2].is_edge) or (self.sides[1].is_edge and self.sides[3].is_edge):
+        #         raise Exception(f"{self.id}: A piece cannot be a part of two edges that are parallel!")
 
     def enhance_corners(self):
         """
