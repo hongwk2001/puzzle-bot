@@ -3,8 +3,8 @@ Common configuration for the puzzle bot
 """
 
 # dimensions for the puzzle you're solving
-PUZZLE_WIDTH = 2
-PUZZLE_HEIGHT = 2
+PUZZLE_WIDTH = 5
+PUZZLE_HEIGHT = 5
 PUZZLE_NUM_PIECES = PUZZLE_WIDTH * PUZZLE_HEIGHT
 TIGHTEN_RELAX_PX_W = 5.699827119  # positive = add space between pieces, negative = remove space between pieces
 TIGHTEN_RELAX_PX_H = 9.121796862

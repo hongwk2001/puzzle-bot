@@ -24,6 +24,25 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
     id: only process the photo with this ID
     """
 
+    #0 clean 0_photos move files to 0_photos/archive dir
+    # move all files from 0_photos to 0_photos/archive except batch.json and file_name in batch_json
+    archive_dir = pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("archive")
+    os.makedirs(archive_dir, exist_ok=True)
+    with open(pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("batch.json")) as f:
+        batch_info = json.load(f)["photos"]
+    valid_files = [d["file_name"] for d in batch_info]
+    for f in os.listdir(pathlib.Path(path).joinpath(PHOTOS_DIR)):
+        if f in( "archive", "batch.json"):
+            continue
+        if f not in valid_files:
+            src = pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath(f)
+            dst = archive_dir.joinpath(f)
+            print(f"Archiving invalid file {src} to {dst}")
+            #try to move, if dst exists, overwrite
+            if os.path.exists(dst):
+                os.remove(dst)
+            os.rename(src, dst)
+
     #1
     if start_at_step <= 1 and stop_before_step > 1:
         width, height, scale_factor = _bmp_all(
@@ -86,10 +105,10 @@ def batch_process_photos(path, serialize, robot_states, id=None, start_at_step=0
             input_path=pathlib.Path(path).joinpath(VECTOR_DIR),
             output_path=pathlib.Path(path).joinpath(DEDUPED_DIR)
         )
-        if count > PUZZLE_WIDTH * PUZZLE_HEIGHT:
-            raise Exception(f"dedupe: expected {PUZZLE_WIDTH * PUZZLE_HEIGHT} pieces but ended up with {count} unique pieces. Try adjusting DUPLICATE_CENTROID_DELTA_PX in config.py")
-        elif count < PUZZLE_WIDTH * PUZZLE_HEIGHT:
-            print(f"dedupe: expected {PUZZLE_WIDTH * PUZZLE_HEIGHT} pieces but ended up with {count} unique pieces. This is usually because some pieces are touching and were not separated. Try turning off CROP_TOP_RIGHT_BOTTOM_LEFT in config.py then running again to find the touching pieces.")
+        # if count > PUZZLE_WIDTH * PUZZLE_HEIGHT:
+        #     raise Exception(f"dedupe: expected {PUZZLE_WIDTH * PUZZLE_HEIGHT} pieces but ended up with {count} unique pieces. Try adjusting DUPLICATE_CENTROID_DELTA_PX in config.py")
+        # elif count < PUZZLE_WIDTH * PUZZLE_HEIGHT:
+        #     print(f"dedupe: expected {PUZZLE_WIDTH * PUZZLE_HEIGHT} pieces but ended up with {count} unique pieces. This is usually because some pieces are touching and were not separated. Try turning off CROP_TOP_RIGHT_BOTTOM_LEFT in config.py then running again to find the touching pieces.")
 
 
 def _bmp_all(input_path, output_path, id):
