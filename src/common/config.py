@@ -44,5 +44,4 @@ CONNECTIVITY_DIR = '5_connectivity'
 # Step 6 takes in the graph of connectivity and outputs a solution
 SOLUTION_DIR = '6_solution'
 
-# Step 7 adjusts the tightness of the solved puzzle: how much breathing room do pieces need to actually click together?
-TIGHTNESS_DIR = '7_tightness'
+

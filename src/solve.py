@@ -32,6 +32,7 @@ def solve(path, start_at=3):
 
     # Step 5.2 - build the board  not 6, kinda messed up the numbering
 
+import pathlib
 
 def _visualize(connectivity, path):
     """
@@ -40,10 +41,14 @@ def _visualize(connectivity, path):
     print(f"\n{util.BLUE}### Step 6 - pick best 3  Visualizing connectivity ###{util.WHITE}\n")
     start_time = time.time()
 
-    # Load an example image (make sure the path is correct)
-    # I'll have only one photo , so not too wrong
-    # let's come back. BH
-    image = cv2.imread(os.path.join(path, PHOTOS_DIR, r"20251012_1.jpg"))
+    #read file_name from batch.json
+    batch_json_path = pathlib.Path(path).joinpath(PHOTOS_DIR, "batch.json")
+    with open(batch_json_path, 'r') as f:
+        batch_data = json.load(f)
+    first_photo_filename = batch_data["photos"][0]["file_name"]
+    first_photo_path = pathlib.Path(path).joinpath(PHOTOS_DIR, first_photo_filename  )
+
+    image = cv2.imread(str(first_photo_path))
 
     # BGR colors for the arrows
     colors = [
