@@ -15,9 +15,14 @@ from common import util
 from common.config import *
 import pathlib
 
+def _del_0_photos(path):
+    photo_dir = pathlib.Path(path).joinpath(PHOTOS_DIR)
+    for f in os.listdir(photo_dir):
+        if f.lower().endswith(('_alpha.jpg','_out.jpg','_removed.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.json')):
+            os.remove(os.path.join(photo_dir, f))
 
 def _prepare_new_run(path, start_at_step, stop_before_step):
-    for i, d in enumerate([PHOTOS_DIR, PHOTO_BMP_DIR, SEGMENT_DIR, DEDUPED_DIR, VECTOR_DIR, CONNECTIVITY_DIR, SOLUTION_DIR, TIGHTNESS_DIR]):
+    for i, d in enumerate([PHOTOS_DIR, PHOTO_BMP_DIR, SEGMENT_DIR, DEDUPED_DIR, VECTOR_DIR, CONNECTIVITY_DIR, SOLUTION_DIR]):
         os.makedirs(os.path.join(path, d), exist_ok=True)
 
         if os.path.exists(os.path.join(path, d, '.DS_Store')):
@@ -28,25 +33,32 @@ def _prepare_new_run(path, start_at_step, stop_before_step):
             for f in os.listdir(os.path.join(path, d)):
                 os.remove(os.path.join(path, d, f))
 
-    #0 clean 0_photos move files to 0_photos/archive dir
-    # move all files from 0_photos to 0_photos/archive except batch.json and file_name in batch_json
-    archive_dir = pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("archive")
-    os.makedirs(archive_dir, exist_ok=True)
-    with open(pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("batch.json")) as f:
-        batch_info = json.load(f)["photos"]
-    valid_files = [d["file_name"] for d in batch_info]
-    for f in os.listdir(pathlib.Path(path).joinpath(PHOTOS_DIR)):
-        if f in( "archive", "batch.json"):
-            continue
-        if f not in valid_files:
-            src = pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath(f)
-            dst = archive_dir.joinpath(f)
-            print(f"Archiving invalid file {src} to {dst}")
-            #try to move, if dst exists, overwrite
-            if os.path.exists(dst):
-                os.remove(dst)
-            os.rename(src, dst)
+    _del_0_photos(path)
 
+    # create a default batch.json file if it doesn't exist
+    batch_json_path = pathlib.Path(path).joinpath(PHOTOS_DIR, "batch.json")
+    if not batch_json_path.exists():
+        print(f"Creating default batch.json at {batch_json_path}")
+
+        # Find the first JPEG in the photos dir to use as a placeholder
+        photo_dir = pathlib.Path(path).joinpath(PHOTOS_DIR)
+        try:
+            first_photo = next(p.name for p in photo_dir.glob('*.jpg'))
+        except StopIteration:
+            first_photo = "placeholder.jpg" # Default if no images found
+
+        # Use a dictionary to define the data, then dump to JSON
+        default_batch_data = {
+            "start_x": "0", "start_y": "0", "start_z": "0",
+            "end_x": "400", "end_y": "400", "end_z": "0",
+            "max_step_size_x": "400", "max_step_size_y": "0",
+            "photos": [
+                {"file_name": first_photo, "position": [0, 0, 0]}
+            ]
+        }
+
+        with open(batch_json_path, "w") as f:
+            json.dump(default_batch_data, f, indent=4)
 
 def main():
     parser = argparse.ArgumentParser()
