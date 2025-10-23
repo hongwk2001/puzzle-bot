@@ -13,6 +13,7 @@ import json
 import process, solve
 from common import util
 from common.config import *
+import pathlib
 
 
 def _prepare_new_run(path, start_at_step, stop_before_step):
@@ -26,6 +27,25 @@ def _prepare_new_run(path, start_at_step, stop_before_step):
         if i != 0 and i > start_at_step and i <= stop_before_step:
             for f in os.listdir(os.path.join(path, d)):
                 os.remove(os.path.join(path, d, f))
+
+    #0 clean 0_photos move files to 0_photos/archive dir
+    # move all files from 0_photos to 0_photos/archive except batch.json and file_name in batch_json
+    archive_dir = pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("archive")
+    os.makedirs(archive_dir, exist_ok=True)
+    with open(pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath("batch.json")) as f:
+        batch_info = json.load(f)["photos"]
+    valid_files = [d["file_name"] for d in batch_info]
+    for f in os.listdir(pathlib.Path(path).joinpath(PHOTOS_DIR)):
+        if f in( "archive", "batch.json"):
+            continue
+        if f not in valid_files:
+            src = pathlib.Path(path).joinpath(PHOTOS_DIR).joinpath(f)
+            dst = archive_dir.joinpath(f)
+            print(f"Archiving invalid file {src} to {dst}")
+            #try to move, if dst exists, overwrite
+            if os.path.exists(dst):
+                os.remove(dst)
+            os.rename(src, dst)
 
 
 def main():
