@@ -11,29 +11,47 @@ def photo_to_bmp(args):
     input_photo_filename, output_bmp_filename = args
     return segment(input_photo_filename, output_bmp_filename)
 
-def  rembg_remove(input_photo_filepath):
+def rembg_remove(input_photo_filepath: str) -> Path:
+    model_path = Path(__file__).parent / "isnet_dis.onnx"
 
-    input_image = Image.open(input_photo_filepath)
     input_path = Path(input_photo_filepath)
+    try:
+        with Image.open(input_photo_filepath) as input_image:
+            try:
+                from dis_bg_remover import remove_background
+            except Exception as e:
+                raise RuntimeError("background remover not available") from e
 
-    # Remove the background
-    from rembg import remove
-    output_image = remove(input_image) # type: ignore
-    #output_image.show('Removed Background')
-    output_image.save(input_path.with_name(f'{input_path.stem}_removed.png')) # type: ignore
+            #verify model file exists
+            if not model_path.exists():
+                raise FileNotFoundError(f"Model file not found at {model_path}")
 
-    # Extract the alpha channel to create a black and white mask
-    # The alpha channel is an 'L' mode image where the background is black (0)
-    # and the foreground is white (255).
-    output_image = output_image.getchannel('A')
-    #output_image.show('Alpha Channel Mask')
-    output_image.save(input_path.with_name(f'{input_path.stem}_alpha.png')) # type: ignore
+            extracted_img_np, mask_np = remove_background(str(model_path), str(input_photo_filepath))
 
-    # Save the output image
-    #output_image.show('Morphology Applied')
-    output_image_filepath = input_path.with_name(f'{input_path.stem}_out.jpg')
-    output_image.save(input_path.with_name(f'{input_path.stem}_out.jpg')) # type: ignore
-    return output_image_filepath
+            if extracted_img_np is None:
+                raise Exception("extracted_img_np is None")
+
+            import numpy as np
+            # ensure uint8 [0,255]
+            if extracted_img_np.dtype != np.uint8:
+                extracted_img_np = (extracted_img_np * 255).astype("uint8")
+            if mask_np.dtype != np.uint8:
+                mask_np = (mask_np * 255).astype("uint8")
+
+            extracted_img = Image.fromarray(extracted_img_np)
+            output_img = Image.fromarray(mask_np)
+
+            extracted_img_filepath = input_path.with_name(f"{input_path.stem}_extracted.png")
+            extracted_img.save(extracted_img_filepath)
+
+            output_img_filepath = input_path.with_name(f"{input_path.stem}_out.png")
+            output_img.save(output_img_filepath)
+
+            return output_img_filepath
+            #return extracted_img_filepath
+    except Exception as e:
+        print(f"rembg_remove failed for {input_photo_filepath}: {e}")
+        raise
 
 def segment(input_photo_filepath, output_path=None, width=SCALE_BMP_TO_WIDTH, threshold=SEG_THRESH, crop=CROP_TOP_RIGHT_BOTTOM_LEFT):
     """
